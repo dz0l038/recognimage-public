@@ -1,0 +1,90 @@
+# Payement made by the user,
+# Only manipulable through lambda
+type Payment
+  @model(subscriptions: null, mutations: null)
+  @auth(rules: [{ allow: groups, groups: ["Admin"], operations: [read, create, update, delete] }]) {
+    id: ID!
+    date: AWSDateTime!
+    stripePaymentIntent: String!
+    amount: Float!
+    user: String!
+}
+
+# The plan purchase
+# Only manipulable through lambda
+type Plan
+  @model(subscriptions: null, mutations: null)
+  @key(fields: ["id"])
+  @key(name: "ByFolder", fields: ["folderId"], queryField: "planByFolder")
+  @auth(rules: [{ allow: groups, groups: ["Admin"], operations: [create, update, delete] }]) {
+    id: ID!
+    paymentId: ID!
+    folderId: ID!
+    maxUpload: Int!
+    usedUpload: Int!
+    createDate: AWSDateTime!
+    endDate: AWSDateTime!
+    user: String!
+}
+
+
+# Folder containing images, can be create by lambda, and read/update by owner
+type Folder
+  @model
+  @key(fields: ["id"])
+  @key(name: "ByOwner", fields: ["owner", "created"], queryField: "folderByOwner")
+  @auth(rules: [{ allow: groups, groups: ["Admin"], operations: [read, create, update, delete] },
+                { allow: owner, operations: [read, create, update] }]) {
+    id: ID!
+    owner: ID!
+    planId: ID!
+    title: String!
+    online: OnlineStatus!
+    created: AWSDateTime!
+    publicKey: String!
+    lastRegex: String
+}
+
+# Images, can be read by owner and manipulate by lambda
+type Image
+  @model(subscriptions: null)
+  @key(fields: ["key"])
+  @key(name: "ByFolder", fields: ["folderId", "name"], queryField: "imagesByFolder")
+  @auth(rules: [{ allow: groups, groups: ["Admin"], operations: [read, create, update, delete] },
+                { allow: owner, operations: [read] }]) {
+    key: ID!
+    folderId: ID!
+    name: String!
+    isAnalyse: Boolean!
+    analysisResult: String
+    online: OnlineStatus!
+    date: AWSDateTime!
+    owner: ID!
+}
+
+# Matches, can be manipulate by owner
+type Match
+  @model
+  @key(fields: ["id"])
+  @key(name: "ByImageKey", fields: ["key", "date"], queryField: "matchByImageKey")
+  @key(name: "ByMatch", fields: ["folderId", "online", "match", "name", "date"], queryField: "imagesByMatch")
+  @auth(rules: [{ allow: groups, groups: ["Admin"], operations: [read, create, update, delete] },
+                { allow: owner, operations: [read, create, update, delete] }]) {
+    id: ID!
+    folderId: ID!
+    key: ID!
+    name: String!
+    match: String!
+    online: OnlineStatus!
+    date: AWSDateTime!
+    owner: ID!
+}
+
+enum OnlineStatus { public private }
+
+
+type Subscription {
+  onCreateImage(folderId: ID): Image @aws_subscribe(mutations: ["createImage"])
+  onUpdateImage(folderId: ID): Image @aws_subscribe(mutations: ["updateImage"])
+  onDeleteImage(folderId: ID): Image @aws_subscribe(mutations: ["deleteImage"])
+}

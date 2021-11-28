@@ -1,0 +1,20 @@
+.MatchTest {
+  .test-img-container {
+    min-width: 300px;
+    padding-top: 100%;
+  }
+  .DisplayImage {
+    width: calc(100% - 0.5em);
+    padding-top: calc(100% - 0.5em);
+    margin-right: 0.5em;
+    margin-bottom: 0.5em;
+    border-radius: 4px;
+  }
+  @media all and (min-width: 600px) {
+    .DisplayImage {
+      width: calc(100% - 400px - 0.5em);
+      padding-top: calc(100% - 400px - 0.5em);
+    }
+  }
+  
+}

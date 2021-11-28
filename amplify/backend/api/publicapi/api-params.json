@@ -1,0 +1,34 @@
+{
+    "paths": [
+        {
+            "name": "/images",
+            "lambdaFunction": "publicImages",
+            "privacy": {
+                "open": true
+            }
+        }
+    ],
+    "resourceName": "publicapi",
+    "apiName": "publicapi",
+    "functionArns": [
+        {
+            "lambdaFunction": "publicImages"
+        }
+    ],
+    "privacy": {
+        "auth": 0,
+        "unauth": 0,
+        "authRoleName": "amplify-recognimage-prod-190704-authRole",
+        "unAuthRoleName": "amplify-recognimage-prod-190704-unauthRole"
+    },
+    "dependsOn": [
+        {
+            "category": "function",
+            "resourceName": "publicImages",
+            "attributes": [
+                "Name",
+                "Arn"
+            ]
+        }
+    ]
+}

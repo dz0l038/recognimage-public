@@ -1,0 +1,253 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "Lambda resource stack creation using Amplify CLI",
+	"Parameters": {
+		"env": {
+			"Type": "String"
+		}
+	},
+	"Conditions": {
+		"ShouldNotCreateEnvResources": {
+			"Fn::Equals": [
+				{
+					"Ref": "env"
+				},
+				"NONE"
+			]
+		}
+	},
+	"Resources": {
+		"LambdaFunction": {
+			"Type": "AWS::Lambda::Function",
+			"Metadata": {
+				"aws:asset:path": "./src",
+				"aws:asset:property": "Code"
+			},
+			"Properties": {
+				"Handler": "index.handler",
+				"FunctionName": {
+					"Fn::If": [
+						"ShouldNotCreateEnvResources",
+						"S3Trigger82a44364",
+						{
+							"Fn::Join": [
+								"",
+								[
+									"S3Trigger82a44364",
+									"-",
+									{
+										"Ref": "env"
+									}
+								]
+							]
+						}
+					]
+				},
+				"Environment": {
+					"Variables": {
+						"ENV": {
+							"Ref": "env"
+						}
+					}
+				},
+				"Role": {
+					"Fn::GetAtt": [
+						"LambdaExecutionRole",
+						"Arn"
+					]
+				},
+				"Runtime": "nodejs10.x",
+				"Timeout": "25",
+				"Code": {
+					"S3Bucket": "amplify-recognimage-dev-91629-deployment",
+					"S3Key": "amplify-builds/S3Trigger82a44364-656a61442b2b324f514a-build.zip"
+				}
+			}
+		},
+		"LambdaExecutionRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": {
+					"Fn::If": [
+						"ShouldNotCreateEnvResources",
+						"S3Trigger82a44364LambdaRole82a44364",
+						{
+							"Fn::Join": [
+								"",
+								[
+									"S3Trigger82a44364LambdaRole82a44364",
+									"-",
+									{
+										"Ref": "env"
+									}
+								]
+							]
+						}
+					]
+				},
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"lambda.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				}
+			}
+		},
+		"lambdaexecutionpolicy": {
+			"DependsOn": [
+				"LambdaExecutionRole"
+			],
+			"Type": "AWS::IAM::Policy",
+			"Properties": {
+				"PolicyName": "lambda-execution-policy",
+				"Roles": [
+					{
+						"Ref": "LambdaExecutionRole"
+					}
+				],
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"logs:CreateLogGroup",
+								"logs:CreateLogStream",
+								"logs:PutLogEvents"
+							],
+							"Resource": {
+								"Fn::Sub": [
+									"arn:aws:logs:${region}:${account}:log-group:/aws/lambda/${lambda}:log-stream:*",
+									{
+										"region": {
+											"Ref": "AWS::Region"
+										},
+										"account": {
+											"Ref": "AWS::AccountId"
+										},
+										"lambda": {
+											"Ref": "LambdaFunction"
+										}
+									}
+								]
+							}
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"dynamodb:PutItem",
+								"dynamodb:DeleteItem",
+								"dynamodb:Scan",
+								"dynamodb:Query",
+								"dynamodb:UpdateItem"
+							],
+							"Resource": "arn:aws:dynamodb:*:*:table/*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"dynamodb:Scan",
+								"dynamodb:Query"
+							],
+							"Resource": "arn:aws:dynamodb:*:*:table/*/index/*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"s3:PutAccountPublicAccessBlock",
+								"s3:GetAccountPublicAccessBlock",
+								"s3:ListAllMyBuckets",
+								"s3:ListJobs",
+								"s3:CreateJob",
+								"s3:HeadBucket"
+							],
+							"Resource": "*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": "s3:*",
+							"Resource": [
+								"arn:aws:s3:::*",
+								"arn:aws:s3:*:*:job/*"
+							]
+						},
+						{
+							"Effect": "Allow",
+							"Action": "s3:*",
+							"Resource": "arn:aws:s3:::*/*"
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"rekognition:ListCollections",
+								"rekognition:DescribeCollection",
+								"rekognition:SearchFaces",
+								"rekognition:DescribeStreamProcessor",
+								"rekognition:SearchFacesByImage",
+								"rekognition:ListFaces"
+							],
+							"Resource": [
+								"arn:aws:rekognition:*:*:collection/*",
+								"arn:aws:rekognition:*:*:streamprocessor/*"
+							]
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"rekognition:DetectLabels",
+								"rekognition:GetCelebrityRecognition",
+								"rekognition:DetectFaces",
+								"rekognition:DetectModerationLabels",
+								"rekognition:GetPersonTracking",
+								"rekognition:GetFaceDetection",
+								"rekognition:RecognizeCelebrities",
+								"rekognition:CompareFaces",
+								"rekognition:DetectText",
+								"rekognition:GetCelebrityInfo",
+								"rekognition:GetLabelDetection",
+								"rekognition:GetContentModeration",
+								"rekognition:GetFaceSearch"
+							],
+							"Resource": "*"
+						}
+					]
+				}
+			}
+		}
+	},
+	"Outputs": {
+		"Name": {
+			"Value": {
+				"Ref": "LambdaFunction"
+			}
+		},
+		"Arn": {
+			"Value": {
+				"Fn::GetAtt": [
+					"LambdaFunction",
+					"Arn"
+				]
+			}
+		},
+		"Region": {
+			"Value": {
+				"Ref": "AWS::Region"
+			}
+		},
+		"LambdaExecutionRole": {
+			"Value": {
+				"Ref": "LambdaExecutionRole"
+			}
+		}
+	}
+}

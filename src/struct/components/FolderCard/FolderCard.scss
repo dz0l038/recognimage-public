@@ -1,0 +1,16 @@
+.FolderCard {
+  margin-right: 1em;
+  margin-bottom: 1em;
+  width: calc(100% - 1em);
+  .card-content {
+    max-width: 420;
+    min-width: 300;
+    min-height: 300px;
+  }
+}
+
+@media all and (min-width: 650px) {
+    .FolderCard {
+      width: calc(50% - 2em);
+    }
+  }
